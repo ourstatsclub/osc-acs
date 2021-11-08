@@ -1,11 +1,14 @@
 # Analytics division of OurStatsClub
 
 # About
-This is a private repository to share management related files among the admins.
+This repository belongs to **our stats club** admins. We share 
 
  - Planning 
+ - Event details
  - Presentations
  - Member profiles
+ - Materials
+ - Reference links
  - etc.
 
 # Events 
