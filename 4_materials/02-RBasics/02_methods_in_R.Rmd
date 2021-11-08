@@ -1,0 +1,118 @@
+---
+title: "Creating methods in R"
+author: Rakesh Poduval, `r Sys.Date()`
+output:
+  html_document: 
+    toc: FALSE
+    toc_depth: 2
+    toc_float: TRUE
+    theme: yeti
+    highlight: monochrome
+---
+
+# Specification
+Methods in R is a very strong and popular feature. The document provides a simple example with a function we can use to exploratory analysis.
+
+# `explore()` function
+
+In baseR we have the function called `summary()` which is very  power full and works with almost all type of R objects. How does this works ? How come the same function works with vectors, data frame, lm (linear models) object and so on...
+
+Let us understand this with a simple example:
+
+Suppose we need a modified version of the above `summary()` which will provide us with more quantile information regarding and regardless of vectors/dataframe as input this should work.
+
+Let's define the 2 separate function to handle the following cases:
+
+* *`exploreX()`* -> for vectors
+* *`exploreData()`* -> for data.frame
+
+## Step 1 - defining the method
+define the parent function properly.
+
+```{r}
+explore <- function(x, ...) {
+  UseMethod("explore")
+}
+```
+
+## Step 2 - defining the default operation
+define the default operation, in this case we expect non numeric vectors.
+
+```{r}
+#' explore.default
+#' @param x an input vector
+#' @param rnd roundind off the results
+#'
+explore.default <- function(x, rnd = 4, ...) {
+  
+  # quick check: input must be numeric
+  stopifnot(class(x) %in% c('integer', 'numeric'))
+  
+  # defining the quantiles for the function
+  prbs <- c(0, 0.05, 0.25, 0.50, 0.75, 0.95, 1)
+  nams <- c("Min", "P05", "P25", "Med", "P75", "P95", "Max")
+  qnts <- rbind.data.frame(round(quantile(x, probs = prbs, na.rm = T, names = F), rnd))
+  names(qnts) <- nams
+  
+  # returning output as a data.frame
+  cbind.data.frame(
+    N = length(x), Mis = sum(is.na(x) | x < 0), 
+    Avg = round(mean(x, na.rm = T), rnd), 
+    qnts, Std = round(sd(x, na.rm = T), rnd))
+}
+```
+
+## Step 3 - extending to data.frame
+The function is extended to react to a data.frame
+
+```{r}
+explore.data.frame <- function(x, rnd = 4, colNames = colnames(x), ...) {
+  
+  # quick check: input data.frame must have 1 row
+  stopifnot(nrow(x) > 0, colNames %in% colnames(x))
+  
+  # excluding non numeric columns from the analysis
+  c <- colnames(x[!sapply(x, class) %in% c('character', 'factor')])
+  c <- intersect(c, colNames)
+  
+  # confirming existence of numeric columns
+  stopifnot(length(c) > 0)
+  
+  # applying the default function to each numeric columns of a data.frame
+  if (length(c) == 1) { # special case for a single column
+    out <- explore.default(x[, c], rnd = rnd)
+    rownames(out) <- c
+  } else { # when there are multiple columns to analyse
+    out <- do.call(rbind, apply(x[c], 2, explore.default, rnd = rnd))
+  }
+  return(out)
+}
+```
+
+## examples
+Now the function can be applied to both `vectors` and and a `data.frame`
+
+```{r}
+explore(iris)
+# explore(iris$Species)
+explore(iris$Sepal.Length)
+explore(iris, colNames = c('Sepal.Length', 'Petal.Length', 'Species'))
+```
+
+Note: With the split function you are able to apply it with different groups
+```{r}
+# grouped by Species
+lapply(split(iris, iris$Species), explore)
+```
+
+# Pros and Cons
+
+**pros**
+
+* works for multiple grouping factors with multiple variables.
+
+**cons**
+
+* not that fast
+* won't work with `tidyverse` grouping feature.
+

@@ -1,0 +1,36 @@
+---
+title: "R Tips"
+author: Rakesh Poduval, `r Sys.Date()`
+output:
+  html_document: 
+    toc: FALSE
+    toc_depth: 2
+    toc_float: TRUE
+    theme: yeti
+    highlight: monochrome
+editor_options: 
+  chunk_output_type: console
+---
+
+**Few tips on R !!!**
+
+# Packages installed 
+To view the R packages installed in your R session run the following scripts.
+
+```{r }
+ip <- installed.packages()
+names(ip[,'Package'])
+```
+
+# Extract inbuild functions
+The internal functions could be hacked sometimes like this
+```{r }
+getAnywhere(mean.default)
+```
+
+# Get system information
+Basic system information cen be obtained like this.
+```{r }
+Sys.info() # system information
+sessionInfo() # about R and the session information
+```
